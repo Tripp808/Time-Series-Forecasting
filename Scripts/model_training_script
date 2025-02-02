@@ -1,0 +1,77 @@
+# model_training_script.py
+
+import numpy as np
+import pandas as pd
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout, Bidirectional
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.regularizers import l2
+
+# Load the preprocessed training data
+train = pd.read_csv('/content/drive/MyDrive/air_quality_forecasting/train.csv')
+test = pd.read_csv('/content/drive/MyDrive/air_quality_forecasting/test.csv')
+
+# Assuming preprocessed data has been saved and loaded
+# Feature engineering and data scaling steps are already done as shown in the data exploration script
+
+X_train_scaled = np.load('X_train_scaled.npy')  # Example path, make sure to save and load processed data
+X_test_scaled = np.load('X_test_scaled.npy')    # Example path
+y_train = train['pm2.5']  # Assuming y_train was extracted in the earlier script
+X_train_split, X_val_split, y_train_split, y_val_split = train_test_split(
+    X_train_scaled, y_train, test_size=0.2, shuffle=False
+)
+
+# Model training function
+def build_and_train_model(params):
+    model = Sequential([
+        Bidirectional(LSTM(params['lstm_units'], activation='relu',
+                           input_shape=(X_train_split.shape[1], X_train_split.shape[2]),
+                           return_sequences=True, kernel_regularizer=l2(0.01))),
+        Dropout(params['dropout']),
+        LSTM(params['lstm_units'] // 2, activation='relu', kernel_regularizer=l2(0.01)),
+        Dense(1)
+    ])
+
+    optimizer = Adam(learning_rate=params['learning_rate'])
+    model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
+
+    early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.0001)
+
+    history = model.fit(
+        X_train_split, y_train_split,
+        epochs=params['epochs'],
+        batch_size=params['batch_size'],
+        validation_data=(X_val_split, y_val_split),
+        callbacks=[early_stopping, reduce_lr],
+        verbose=0
+    )
+
+    # Return the trained model and history
+    return model, history
+
+# Train the final model with hyperparameters found via Optuna or other optimization methods
+best_params = {
+    'lstm_units': 49,
+    'dropout': 0.21265568795964723,
+    'batch_size': 32,
+    'learning_rate': 0.001,
+    'epochs': 50
+}
+
+final_model, final_history = build_and_train_model(best_params)
+
+# Plot training and validation loss
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(8, 6))
+plt.plot(final_history.history['loss'], label='Training Loss')
+plt.plot(final_history.history['val_loss'], label='Validation Loss')
+plt.title('Loss on Training and Validation Data')
+plt.xlabel('Epochs')
+plt.ylabel('Loss (MSE)')
+plt.legend()
+plt.show()

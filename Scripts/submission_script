@@ -1,0 +1,38 @@
+# submission_script.py
+
+import numpy as np
+import pandas as pd
+
+# Assuming the final model and scaler have been trained and saved
+final_model = ...  # Load the final trained model
+scaler = ...  # Load the scaler
+
+# Load the test dataset
+test = pd.read_csv('/content/drive/MyDrive/air_quality_forecasting/test.csv')
+
+# Prepare the test data (assuming preprocessing steps are the same as for training data)
+test = add_time_features(test)
+X_test_scaled = scaler.transform(test.drop(['No'], axis=1))  # Scaling
+
+# Reshape for LSTM input
+X_test_scaled = np.expand_dims(X_test_scaled, axis=1)
+
+# Make predictions on the test set
+predictions = final_model.predict(X_test_scaled).flatten()
+predictions = np.round(predictions).astype(int)
+
+# Prepare the submission file
+submission = pd.DataFrame({
+    'row ID': test.index.strftime('%Y-%m-%d %-H:%M:%S'),  # Ensures single-digit hours are not zero-padded
+    'pm2.5': predictions
+})
+
+# Sort the submission by 'row ID' to match the test set order
+submission = submission.sort_values(by='row ID')
+
+# Save the submission file
+submission.to_csv('/content/drive/MyDrive/air_quality_forecasting/latsubOptuna.csv', index=False, encoding='utf-8')
+
+# Print submission overview
+print("\nSubmission File Overview:")
+print(submission.head())

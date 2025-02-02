@@ -1,0 +1,13 @@
+pandas
+numpy
+matplotlib
+seaborn
+tensorflow
+scikit-learn
+optuna
+google-colab
+
+# Additional dependencies for GitHub project
+jupyterlab
+notebook
+tensorflow-addons
