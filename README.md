@@ -85,6 +85,8 @@ The best-performing model is a **2-layer Bidirectional LSTM** with the following
 - **Validation Loss (MSE):** 5599.42
 - **Validation RMSE:** 22.78
 - **Kaggle Leaderboard Rank:** Top 10%
+- **Training MSE:** 3867.0992
+- **Training RMSE:** 62.1860
 
 ---
 
@@ -187,5 +189,3 @@ Deploy the model as a real-time forecasting tool.
 7. K. P. Murphy, Machine Learning: A Probabilistic Perspective. Cambridge, MA, USA: MIT Press, 2012.
 
 ---
-
-This `README.md` provides a comprehensive overview of your project, including setup instructions, methodology, results, and future work. Let me know if you need further adjustments! 🚀
